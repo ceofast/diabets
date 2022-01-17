@@ -265,6 +265,13 @@ def outlier_thresholds(dataframe, col_name, q1=0.25, q3=0.75):
     low_limit = quartile1 - 1.5 * interquantile_range
     return low_limit, up_limit
 
+def check_outlier(dataframe, col_name):
+    low_limit, up_limit = outlier_thresholds(dataframe, col_name)
+    if dataframe[(dataframe[col_name] > up_limit) | (dataframe[col_name] < low_limit)].any(axis=None):
+        return True
+    else:
+        return False
+
 outlier_thresholds(df, num_cols)
 # # (Pregnancies                  -6.50000
 # # Glucose                      37.12500
@@ -501,8 +508,8 @@ dff.head()
 # 3  0.00000      0.05882  0.29032        0.42857        0.17391  0.09615 0.20245                   0.03800 0.00000
 # 4  1.00000      0.00000  0.60000        0.16327        0.30435  0.18510 0.50920                   0.94364 0.20000
 
-dff = pd.DataFrame(scaler.inverse_transform(dff), columns=dff.columns)
-dff.head()
+df = pd.DataFrame(scaler.inverse_transform(df), columns=df.columns)
+df.head()
 #    Outcome  Pregnancies   Glucose  BloodPressure  SkinThickness   Insulin      BMI  DiabetesPedigreeFunction      Age
 # 0  1.00000      6.00000 148.00000       72.00000       35.00000 334.20000 33.60000                   0.62700 50.00000
 # 1  0.00000      1.00000  85.00000       66.00000       29.00000  56.20000 26.60000                   0.35100 31.00000
@@ -515,60 +522,61 @@ def replace_with_thresholds(dataframe, variable):
     dataframe.loc[(dataframe[variable] > up_limit), variable] = up_limit
 
 for col in num_cols:
-    replace_with_thresholds(dff, col)
+    replace_with_thresholds(df, col)
 
-dff.loc[df_["Pregnancies"] >= 10, "Pregnancies"] = 0.0
-dff.loc[df_["Pregnancies"] == 0, "New_Preg_Cat"] = "Not Pregnant"
-dff.loc[df_["Pregnancies"] > 0, "New_Preg_Cat"] = "Pregnant"
+f.loc[df["Pregnancies"] >= 10, "New_Preg_Cat"] = 0.0
+df.loc[df["Pregnancies"] == 0, "New_Preg_Cat"] = "Not Pregnant"
+df.loc[df["Pregnancies"] > 0, "New_Preg_Cat"] = "Pregnant"
 
-dff.loc[df_["Glucose"] < 70, "New_Glucose_Cat"] = "low"
-dff.loc[((df_["Glucose"] < 100) & (df_["Glucose"] >= 70)), "New_Glucose_Cat"] = "Normal"
-dff.loc[((df_["Glucose"] < 125) & (df_["Glucose"] >= 100)), "New_Glucose_Cat"] = "Potential"
-dff.loc[df_["Glucose"] >= 125, "New_Glucose_Cat"] = "High"
+df.loc[df["Glucose"] < 70, "New_Glucose_Cat"] = "low"
+df.loc[((df["Glucose"] < 100) & (df["Glucose"] >= 70)), "New_Glucose_Cat"] = "Normal"
+df.loc[((df["Glucose"] < 125) & (df["Glucose"] >= 100)), "New_Glucose_Cat"] = "Potential"
+df.loc[df["Glucose"] >= 125, "New_Glucose_Cat"] = "High"
 
-dff.loc[df_["BloodPressure"] > 90, "New_Bloodpr_Cat"] = "High"
-dff.loc[((df_["BloodPressure"] <= 90) & (df_["BloodPressure"] > 0)), "New_Bloodpr_Cat"] = "Normal"
+df.loc[df["BloodPressure"] > 90, "New_Bloodpr_Cat"] = "High"
+df.loc[((df["BloodPressure"] <= 90) & (df["BloodPressure"] > 0)), "New_Bloodpr_Cat"] = "Normal"
 
-dff.loc[df_["BMI"] < 18.5, "New_BMI_Cat"] = "Underweight"
-dff.loc[((df_["BMI"] < 30) & (df_["BMI"] >= 18.5)), "New_BMI_Cat"] = "Normal"
-dff.loc[((df_["BMI"] < 34.9) & (df_["BMI"] >= 30)), "New_BMI_Cat"] = "Obese"
-dff.loc[df_["BMI"] >= 34.9, "New_BMI_Cat"] = "Extremely Obese"
+df.loc[df["BMI"] < 18.5, "New_BMI_Cat"] = "Underweight"
+df.loc[((df["BMI"] < 30) & (df["BMI"] >= 18.5)), "New_BMI_Cat"] = "Normal"
+df.loc[((df["BMI"] < 34.9) & (df["BMI"] >= 30)), "New_BMI_Cat"] = "Obese"
+df.loc[df["BMI"] >= 34.9, "New_BMI_Cat"] = "Extremely Obese"
 
-dff.loc[df_["Age"] <= 21, "New_Age_Cat"] = "Young"
-dff.loc[((df_["Age"] <= 50) & (df_["Age"] > 21)), "New_Age_Cat"] = "Mature"
-dff.loc[df_["Age"] > 50, "New_Age_Cat"] = "Senior"
+df.loc[df["Age"] <= 21, "New_Age_Cat"] = "Young"
+df.loc[((df["Age"] <= 50) & (df["Age"] > 21)), "New_Age_Cat"] = "Mature"
+df.loc[df["Age"] > 50, "New_Age_Cat"] = "Senior"
 
-dff.head()
-#    Outcome  Pregnancies   Glucose  BloodPressure  SkinThickness   Insulin      BMI  DiabetesPedigreeFunction      Age  New_Preg_Cat New_Glucose_Cat New_Bloodpr_Cat      New_BMI_Cat New_Age_Cat
-# 0  1.00000      6.00000 148.00000       72.00000       35.00000 334.20000 33.60000                   0.62700 50.00000      Pregnant            High          Normal            Obese      Mature
-# 1  0.00000      1.00000  85.00000       66.00000       29.00000  56.20000 26.60000                   0.35100 31.00000      Pregnant          Normal          Normal           Normal      Mature
-# 2  1.00000      8.00000 183.00000       64.00000       32.20000 238.00000 23.30000                   0.67200 32.00000      Pregnant            High          Normal           Normal      Mature
-# 3  0.00000      1.00000  89.00000       66.00000       23.00000  94.00000 28.10000                   0.16700 21.00000      Pregnant          Normal          Normal           Normal       Young
-# 4  1.00000      0.00000 137.00000       40.00000       35.00000 168.00000 43.10000                   1.20000 33.00000  Not Pregnant            High          Normal  Extremely Obese      Mature
+df.head()
+# 	Outcome	Pregnancies	Glucose	BloodPressure	SkinThickness	Insulin	BMI	DiabetesPedigreeFunction	Age	New_Preg_Cat	New_Glucose_Cat	New_Bloodpr_Cat	New_BMI_Cat	New_Age_Cat
+# 0	 1.00000	6.00000	148.00000	72.00000	35.00000	334.20000	33.60000	0.62700	50.00000	Pregnant	        High	        Normal	        Obese       Mature
+# 1	 0.00000	1.00000	85.00000	66.00000	29.00000	56.20000	26.60000	0.35100	31.00000	Pregnant	        Normal	        Normal	        Normal	    Mature
+# 2	 1.00000	8.00000	183.00000	64.00000	32.20000	238.00000	23.30000	0.67200	32.00000	Pregnant	        High	        Normal	        Normal	    Mature
+# 3	 0.00000	1.00000	89.00000	66.00000	23.00000	94.00000	28.10000	0.16700	21.00000	Pregnant	        Normal	        Normal	        Normal	    Young
+# 4	 1.00000	0.00000	137.00000	40.00000	35.00000	168.00000	43.10000	1.20000	33.00000	Not Pregnant	    High	        Normal	        Extremely Obese	Mature
 
-dff.isnull().sum()
-# Outcome                      0
-# Pregnancies                  0
-# Glucose                      0
-# BloodPressure                0
-# SkinThickness                0
-# Insulin                      0
-# BMI                          0
-# DiabetesPedigreeFunction     0
-# Age                          0
-# New_Preg_Cat                 0
-# New_Glucose_Cat              0
-# New_Bloodpr_Cat             35
-# New_BMI_Cat                  0
-# New_Age_Cat                  0
+df.isnull().sum()
+# Outcome                     0
+# Pregnancies                 0
+# Glucose                     0
+# BloodPressure               0
+# SkinThickness               0
+# Insulin                     0
+# BMI                         0
+# DiabetesPedigreeFunction    0
+# Age                         0
+# New_Preg_Cat                0
+# New_Glucose_Cat             0
+# New_Bloodpr_Cat             0
+# New_BMI_Cat                 0
+# New_Age_Cat                 0
+# dtype: int64
 
-cat_cols = [col for col in dff.columns if dff[col].dtypes == "O"]
+cat_cols = [col for col in df.columns if df[col].dtypes == "O"]
 
 def one_hot_encoder(dataframe, categorical_columns, drop_first=True):
     dataframe = pd.get_dummies(dataframe, columns=categorical_columns, drop_first=drop_first)
     return dataframe
 
-one_hot_encoder(dff, cat_cols)
+one_hot_encoder(df, cat_cols)
 #     Outcome  Pregnancies   Glucose  BloodPressure  SkinThickness   Insulin      BMI  DiabetesPedigreeFunction      Age  New_Preg_Cat_Pregnant  New_Glucose_Cat_Normal  New_Glucose_Cat_Potential  New_Glucose_Cat_low  New_Bloodpr_Cat_Normal  New_BMI_Cat_Normal  New_BMI_Cat_Obese  New_BMI_Cat_Underweight  New_Age_Cat_Senior  New_Age_Cat_Young
 # 0    1.00000      6.00000 148.00000       72.00000       35.00000 334.20000 33.60000                   0.62700 50.00000                      1                       0                          0                    0                       1                   0                  1                        0                   0                  0
 # 1    0.00000      1.00000  85.00000       66.00000       29.00000  56.20000 26.60000                   0.35100 31.00000                      1                       1                          0                    0                       1                   1                  0                        0                   0                  0
@@ -583,7 +591,7 @@ one_hot_encoder(dff, cat_cols)
 # 767  0.00000      1.00000  93.00000       70.00000       31.00000  72.40000 30.40000                   0.31500 23.00000                      1                       1                          0                    0                       1                   0                  1                        0                   0                  0
 # [768 rows x 19 columns]
 
-dff = one_hot_encoder(dff, cat_cols)
+df = one_hot_encoder(df, cat_cols)
 
 def rare_analyser(dataframe, target, cat_cols):
     for col in cat_cols:
@@ -602,91 +610,104 @@ def rare_encoder(dataframe, rare_perc, cat_cols):
 
     return dataframe
 
-cat_cols, num_cols, cat_but_car = grab_col_names(dff)
+cat_cols, num_cols, cat_but_car = grab_col_names(df)
 
-rare_analyser(dff, "Outcome", cat_cols)
+rare_analyser(df, "Outcome", cat_cols)
 # Outcome : 2
-#          COUNT   RATIO  TARGET_MEAN
+#         COUNT   RATIO  TARGET_MEAN
 # 0.00000    500 0.65104      0.00000
 # 1.00000    268 0.34896      1.00000
+
+
 # New_Preg_Cat_Pregnant : 2
 #    COUNT   RATIO  TARGET_MEAN
 # 0    111 0.14453      0.34234
 # 1    657 0.85547      0.35008
+
+
 # New_Glucose_Cat_Normal : 2
 #    COUNT   RATIO  TARGET_MEAN
-# 0    587 0.76432      0.43271
-# 1    181 0.23568      0.07735
+# 0    584 0.76042      0.43493
+# 1    184 0.23958      0.07609
+
+
 # New_Glucose_Cat_Potential : 2
 #    COUNT   RATIO  TARGET_MEAN
-# 0    508 0.66146      0.39173
-# 1    260 0.33854      0.26538
+# 0    494 0.64323      0.38866
+# 1    274 0.35677      0.27737
+
+
 # New_Glucose_Cat_low : 2
 #    COUNT   RATIO  TARGET_MEAN
-# 0    752 0.97917      0.35372
-# 1     16 0.02083      0.12500
+# 0    757 0.98568      0.35403
+# 1     11 0.01432      0.00000
+
+
 # New_Bloodpr_Cat_Normal : 2
 #    COUNT   RATIO  TARGET_MEAN
-# 0     73 0.09505      0.46575
-# 1    695 0.90495      0.33669
+# 0     38 0.04948      0.47368
+# 1    730 0.95052      0.34247
+
+
 # New_BMI_Cat_Normal : 2
 #    COUNT   RATIO  TARGET_MEAN
-# 0    487 0.63411      0.45380
-# 1    281 0.36589      0.16726
+# 0    482 0.62760      0.45851
+# 1    286 0.37240      0.16434
+
+
 # New_BMI_Cat_Obese : 2
 #    COUNT   RATIO  TARGET_MEAN
-# 0    550 0.71615      0.30909
-# 1    218 0.28385      0.44954
+# 0    546 0.71094      0.30769
+# 1    222 0.28906      0.45045
+
+
 # New_BMI_Cat_Underweight : 2
 #    COUNT   RATIO  TARGET_MEAN
-# 0    753 0.98047      0.35325
-# 1     15 0.01953      0.13333
+# 0    764 0.99479      0.35079
+# 1      4 0.00521      0.00000
+
+
 # New_Age_Cat_Senior : 2
 #    COUNT   RATIO  TARGET_MEAN
 # 0    687 0.89453      0.33479
 # 1     81 0.10547      0.46914
+
+
 # New_Age_Cat_Young : 2
 #    COUNT   RATIO  TARGET_MEAN
 # 0    705 0.91797      0.37305
 # 1     63 0.08203      0.07937
 
-rare_encoder(dff, 0.01, cat_cols)
-#      Outcome  Pregnancies   Glucose  BloodPressure  SkinThickness   Insulin      BMI  DiabetesPedigreeFunction      Age  New_Preg_Cat_Pregnant  New_Glucose_Cat_Normal  New_Glucose_Cat_Potential  New_Glucose_Cat_low  New_Bloodpr_Cat_Normal  New_BMI_Cat_Normal  New_BMI_Cat_Obese  New_BMI_Cat_Underweight  New_Age_Cat_Senior  New_Age_Cat_Young
-# 0    1.00000      6.00000 148.00000       72.00000       35.00000 334.20000 33.60000                   0.62700 50.00000                      1                       0                          0                    0                       1                   0                  1                        0                   0                  0
-# 1    0.00000      1.00000  85.00000       66.00000       29.00000  56.20000 26.60000                   0.35100 31.00000                      1                       1                          0                    0                       1                   1                  0                        0                   0                  0
-# 2    1.00000      8.00000 183.00000       64.00000       32.20000 238.00000 23.30000                   0.67200 32.00000                      1                       0                          0                    0                       1                   1                  0                        0                   0                  0
-# 3    0.00000      1.00000  89.00000       66.00000       23.00000  94.00000 28.10000                   0.16700 21.00000                      1                       1                          0                    0                       1                   1                  0                        0                   0                  1
-# 4    1.00000      0.00000 137.00000       40.00000       35.00000 168.00000 43.10000                   1.20000 33.00000                      0                       0                          0                    0                       1                   0                  0                        0                   0                  0
-# ..       ...          ...       ...            ...            ...       ...      ...                       ...      ...                    ...                     ...                        ...                  ...                     ...                 ...                ...                      ...                 ...                ...
-# 763  0.00000      0.00000 101.00000       76.00000       48.00000 180.00000 32.90000                   0.17100 63.00000                      1                       0                          1                    0                       1                   0                  1                        0                   1                  0
-# 764  0.00000      2.00000 122.00000       70.00000       27.00000 150.00000 36.80000                   0.34000 27.00000                      1                       0                          1                    0                       1                   0                  0                        0                   0                  0
-# 765  0.00000      5.00000 121.00000       72.00000       23.00000 112.00000 26.20000                   0.24500 30.00000                      1                       0                          1                    0                       1                   1                  0                        0                   0                  0
-# 766  1.00000      1.00000 126.00000       60.00000       26.40000 122.40000 30.10000                   0.34900 47.00000                      1                       0                          0                    0                       1                   0                  1                        0                   0                  0
-# 767  0.00000      1.00000  93.00000       70.00000       31.00000  72.40000 30.40000                   0.31500 23.00000                      1                       1                          0                    0                       1                   0                  1                        0                   0                  0
-# [768 rows x 19 columns]
+rare_encoder(df, 0.01, cat_cols)
+# 	Outcome	Pregnancies	Glucose	BloodPressure	SkinThickness	Insulin	 BMI	     DiabetesPedigreeFunction	Age	New_Preg_Cat_Pregnant	New_Glucose_Cat_Normal	New_Glucose_Cat_Potential	New_Glucose_Cat_low	New_Bloodpr_Cat_Normal	New_BMI_Cat_Normal	New_BMI_Cat_Obese	New_BMI_Cat_Underweight	New_Age_Cat_Senior	New_Age_Cat_Young
+# 0	1.00000	0.60000	    0.73810	0.00000	        0.49793	        2.05020	 0.15761	 0.66536	1.23529	1	0	0	0	1	0	1	0	0	0
+# 1	0.00000	-0.40000	-0.7619 -0.37500	    0.00000	        -0.74096 -0.60326	 -0.05621	0.11765	1	1	0	0	1	1	0	0	0	0
+# 2	1.00000	1.00000	    1.57143	-0.50000	    0.26556	        1.08434	 -0.96196	 0.78301	0.17647	1	0	0	0	1	1	0	0	0	0
+# 3	0.00000	-0.40000	-0.6666 -0.37500	    -0.49793	    -0.36145 -0.44022	 -0.53725	-0.47059	1	1	0	0	1	1	0	0	0	1
+# 4	1.00000	-0.60000	0.47619	-2.00000	    0.49793	        0.38153	 1.19022	 2.16340	0.23529	0	0	0	0	1	0	0	0	0	0
 
 dff = rare_encoder(dff, 0.01, cat_cols)
 
-ohe_cols = [col for col in dff.columns if 10 >= dff[col].nunique() > 2]
+ohe_cols = [col for col in df.columns if 10 >= df[col].nunique() > 2]
 
-dff = one_hot_encoder(dff, ohe_cols)
+df = one_hot_encoder(df, ohe_cols)
 
 useless_cols = [col for col in dff.columns if dff[col].nunique() == 2 and (dff[col].value_counts() / len(dff) < 0.01).any(axis=None)]
 
 rs = RobustScaler()
 
-dff[num_cols] = rs.fit_transform(dff[num_cols])
+df[num_cols] = rs.fit_transform(df[num_cols])
 
-dff.head()
-#    Outcome  Glucose  BloodPressure  SkinThickness  Insulin      BMI  DiabetesPedigreeFunction      Age  New_Preg_Cat_Pregnant  New_Glucose_Cat_Normal  New_Glucose_Cat_Potential  New_Glucose_Cat_low  New_Bloodpr_Cat_Normal  New_BMI_Cat_Normal  New_BMI_Cat_Obese  New_BMI_Cat_Underweight  New_Age_Cat_Senior  New_Age_Cat_Young  Pregnancies_1.0  Pregnancies_2.0  Pregnancies_2.9999999999999996  Pregnancies_4.0  Pregnancies_5.0  Pregnancies_5.999999999999999  Pregnancies_7.0  Pregnancies_8.0  Pregnancies_9.0  Pregnancies
-# 0  1.00000  0.75152        0.00000        0.37500 -0.23969  0.17204                   0.66536  1.23529                      1                       0                          0                    0                       1                   0                  1                        0                   0                  0                0                0                               0                0                0                              1                0                0                0      0.60000
-# 1  0.00000 -0.77576       -0.33333        0.18750 -0.23969 -0.58065                  -0.05621  0.11765                      1                       1                          0                    0                       1                   1                  0                        0                   0                  0                1                0                               0                0                0                              0                0                0                0     -0.40000
-# 2  1.00000  1.60000       -0.44444       -0.71875 -0.23969 -0.93548                   0.78301  0.17647                      1                       0                          0                    0                       1                   1                  0                        0                   0                  0                0                0                               0                0                0                              0                0                1                0      1.00000
-# 3  0.00000 -0.67879       -0.33333        0.00000  0.49902 -0.41935                  -0.53725 -0.47059                      1                       1                          0                    0                       1                   1                  0                        0                   0                  1                1                0                               0                0                0                              0                0                0                0     -0.40000
-# 4  1.00000  0.48485       -1.77778        0.37500  1.08055  1.19355                   5.00784  0.23529                      0                       0                          0                    0                       1                   0                  0                        0                   0                  0                0                0                               0                0                0                              0                0                0                0     -0.60000
+df.head()
+# 	Outcome	Pregnancies	Glucose	BloodPressure	SkinThickness	Insulin	BMI	DiabetesPedigreeFunction	Age	New_Preg_Cat_Pregnant	New_Glucose_Cat_Normal	New_Glucose_Cat_Potential	New_Glucose_Cat_low	New_Bloodpr_Cat_Normal	New_BMI_Cat_Normal	New_BMI_Cat_Obese	New_BMI_Cat_Underweight	New_Age_Cat_Senior	New_Age_Cat_Young
+# 0	1.00000	0.60000	0.73810	0.00000	0.49793	2.05020	0.15761	0.66536	1.23529	1	0	0	0	1	0	1	0	0	0
+# 1	0.00000	-0.40000	-0.76190	-0.37500	0.00000	-0.74096	-0.60326	-0.05621	0.11765	1	1	0	0	1	1	0	0	0	0
+# 2 	1.00000	1.00000	1.57143	-0.50000	0.26556	1.08434	-0.96196	0.78301	0.17647	1	0	0	0	1	1	0	0	0	0
+# 3	0.00000	-0.40000	-0.66667	-0.37500	-0.49793	-0.36145	-0.44022	-0.53725	-0.47059	1	1	0	0	1	1	0	0	0	1
+# 4	1.00000	-0.60000	0.47619	-2.00000	0.49793	0.38153	1.19022	2.16340	0.23529	0	0	0	0	1	0	0	0	0	0
 
-y = dff["Outcome"]
-X = dff.drop(["Outcome"], axis=1)
+y = df["Outcome"]
+X = df.drop(["Outcome"], axis=1)
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.30, random_state=47)
 
@@ -695,10 +716,10 @@ rf_model = RandomForestClassifier(random_state=2).fit(X_train, y_train)
 y_pred = rf_model.predict(X_test)
 
 accuracy_score(y_pred, y_test)
-# 0.7619047619047619
+# 0.7748917748917749
 
 print("Accuracy Score: " + f'{accuracy_score(y_pred, y_test):.2f}')
-# Accuracy Score: 0.76
+# Accuracy Score: 0.77
 
 def plot_importance(model, features, num=len(X), save=False):
     feature_imp = pd.DataFrame({'Value': model.feature_importances_, 'Feature': features.columns})
